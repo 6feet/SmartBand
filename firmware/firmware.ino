@@ -519,7 +519,7 @@ void loop() {
     before = last;
     ptr++;
     ptr %= 4;
-  } 
+  }
   if (millis() - displayRefreshTime > refreshRate) {
           displayRefreshTime = millis();
         displayMenu6();
@@ -708,7 +708,7 @@ void displayMenu4() {
   display.setRotation(0);
   display.clearDisplay();
   display.setCursor(0, 0);
-  display.println("Hello From Arduino");
+  display.println("Hello From Drix!");
   display.println("  :)");
   display.println("Hold for Bootloader");
   display.display();
