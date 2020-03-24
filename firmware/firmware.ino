@@ -25,7 +25,8 @@ Adafruit_SSD1306 display(128, 32, &SPI, 28, 4, 29);
 
 boolean debug = false;
 
-#define sleepDelay 7000
+// TODO: bring it back to smaller value later (3000ms?)
+#define sleepDelay ((unsigned long)-1)
 #define BUTTON_PIN              30
 #define refreshRate 100
 
@@ -673,26 +674,37 @@ void displayMenu2() {
   softwrite(0x06);
   softendTransmission();
   softrequestFrom(0x1F , 6);
-  res[0] = softread();
-  res[1] = softread();
-  res[2] = softread();
-  res[3] = softread();
-  res[4] = softread();
-  res[5] = softread();
-  byte x = (int16_t)((res[1] << 8) | res[0]) / 128;
-  byte y = (int16_t)((res[3] << 8) | res[2]) / 128;
-  byte z = (int16_t)((res[5] << 8) | res[4]) / 128;
+  for (int i = 0; i < 6; i++) {
+      res[i] = softread();
+  }
+
+  float acc[] = { int16_t((res[1] << 8) | res[0]) / 128,
+                  int16_t((res[3] << 8) | res[2]) / 128,
+                  int16_t((res[5] << 8) | res[4]) / 128 };
 
   display.clearDisplay();
   display.setCursor(0, 0);
-  display.println("Menue2 PushMSG:");
-  display.println(msgText);
-  display.print(x);
-  display.print(",");
-  display.print(y);
-  display.print(",");
-  display.println(z);
+
+  char tmp[21];
+  sprintf(tmp, "accel: %d, %d, %d", int(acc[0]), int(acc[1]), int(acc[2]));
+  display.println(tmp);
+
+  // print a simple VU-meter
+  for (int axis = 0; axis < 3; axis++) {
+      for (int i = 0; i < (128+int(acc[axis])) / (255/21); i++) {
+          display.print(i==10? '0' : '+');
+      }
+      display.println();
+  }
   display.display();
+
+//// vibrate if we raise hand (simple WIP test)
+//if ( acc[2] > -90) {
+//  digitalWrite(25, HIGH);
+//  delay(50);
+//  digitalWrite(25, LOW);
+//  delay(150);
+//}
 }
 
 void displayMenu3() {
