@@ -1,3 +1,10 @@
+#TODO: make the device choice interactive:
+MAC_ADDR = "C4:2A:69:B8:49:50"
+DROP_DIR="~/Dropbox/firmware"
+
+GIT_HASH=$$(git rev-parse --short HEAD)
+DATE_TIME=$$(date +"%Y.%m.%d_%Ih%Mm%Ss")
+
 BIN_DIR = /tmp/arduino_build
 
 ELF = $(BIN_DIR)/*elf
@@ -10,18 +17,22 @@ ARG = -if swd -speed 1000 -device NRF52832_xxAA
 TERM = gnome-terminal --
 BOARD = nRF52D6Fitness:nRF5:dsd6Watch:softdevice=onlySoftDevice
 
-GIT_HASH=$$(git rev-parse --short HEAD)
-DATE_TIME=$$(date +"%Y.%m.%d_%Ih%Mm%Ss")
-DROP_DIR="/home/drix/Dropbox/firmware"
-
-.PHONY: all dropbox upload compile pref_list debug startgdbserver \
+.PHONY: all BLE_upload dropbox upload compile pref_list debug startgdbserver \
 		local_startgdbserver stopgdbserver clean clean_cache c l d
 
 
-all: dropbox
+all: compile BLE_upload
+
+
+BLE_upload:
+	@echo "Using device with MAC address: $(MAC_ADDR) (see Makefile)"
+	sudo ./desay_dfu.py	\
+		-a $(MAC_ADDR) \
+		-z $(BIN_DIR)*/*zip
+
 
 dropbox: compile
-	cp $(BIN_DIR)*/*zip $(DROP_DIR)/firmware_$(GIT_HASH)_$(DATE_TIME).zip
+	cp $(BIN_DIR)*/*zip $(DROP_DIR)/hash_$(GIT_HASH)_$(DATE_TIME).zip
 
 # TODO: make install (upload could depend on it too) examples:
 #
