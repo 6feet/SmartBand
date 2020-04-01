@@ -23,7 +23,7 @@
 
 Adafruit_SSD1306 display(128, 32, &SPI, 28, 4, 29);
 
-boolean debug = false;
+boolean debug = true;
 
 // TODO: bring it back to smaller value later (3000ms?)
 #define sleepDelay ((unsigned long)-1)
@@ -381,6 +381,7 @@ void setup() {
   digitalWrite(4, LOW);
   pinMode(15, INPUT);
   if (debug)Serial.begin(115200);
+  if (debug)Serial.println("Hello, World!");
   wdt_enable(5000);
   blePeripheral.setLocalName("DS-D6");
   blePeripheral.setAdvertisingInterval(555);
@@ -547,6 +548,7 @@ void loop() {
     }
     if (buttonPressed) {
       buttonPressed = false;
+      Serial.println(menu);
       switch (menu) {
         case 0:
           menu = 1;
