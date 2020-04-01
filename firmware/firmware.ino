@@ -701,15 +701,19 @@ void displayMenu2() {
       }
       display.println();
   }
+  bool risk = tilt[1] > 30;
+  if (risk) {
+      display.println("!!!!!!!!!! !!!!!!!!!!");
+  }
   display.display();
 
-//// vibrate if we raise hand (simple WIP test)
-//if ( acc[2] > -90) {
-//  digitalWrite(25, HIGH);
-//  delay(50);
-//  digitalWrite(25, LOW);
-//  delay(150);
-//}
+  // vibrate if we raise hand (simple WIP test)
+  if (risk) {
+    digitalWrite(25, HIGH);
+    delay(100);
+    digitalWrite(25, LOW);
+    delay(100);
+  }
 }
 
 void displayMenu3() {
