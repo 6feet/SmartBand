@@ -682,16 +682,21 @@ void displayMenu2() {
                   int16_t((res[3] << 8) | res[2]) / 128,
                   int16_t((res[5] << 8) | res[4]) / 128 };
 
+  // pitch, roll - source:
+  // http://www.hobbytronics.co.uk/accelerometer-info
+  float tilt[] = {(atan(acc[0] / sqrt(acc[1]*acc[1] + acc[2]*acc[2]))*180) / M_PI,
+                  (atan(acc[1] / sqrt(acc[0]*acc[0] + acc[2]*acc[2]))*180) / M_PI };
+
   display.clearDisplay();
   display.setCursor(0, 0);
 
   char tmp[21];
-  sprintf(tmp, "accel: %d, %d, %d", int(acc[0]), int(acc[1]), int(acc[2]));
+  sprintf(tmp, "pitch: %3d, roll: %3d", int(tilt[0]), int(tilt[1]));
   display.println(tmp);
 
   // print a simple VU-meter
-  for (int axis = 0; axis < 3; axis++) {
-      for (int i = 0; i < (128+int(acc[axis])) / (255/21); i++) {
+  for (int axis = 0; axis < 2; axis++) {
+      for (int i = 0; i < (90+int(tilt[axis])) / (180/21); i++) {
           display.print(i==10? '0' : '+');
       }
       display.println();
