@@ -643,15 +643,59 @@ void loop() {
 
 void displayMenu0() {
   display.setRotation(0);
+
+  uint8_t res[6];
+  softbeginTransmission(0x1F);
+  softwrite(0x06);
+  softendTransmission();
+  softrequestFrom(0x1F , 6);
+  for (int i = 0; i < 6; i++) {
+      res[i] = softread();
+  }
+
+  float acc[] = { int16_t((res[1] << 8) | res[0]) / 128,
+                  int16_t((res[3] << 8) | res[2]) / 128,
+                  int16_t((res[5] << 8) | res[4]) / 128 };
+
+  // pitch, roll - source:
+  // http://www.hobbytronics.co.uk/accelerometer-info
+  float tilt[] = {(atan(acc[0] / sqrt(acc[1]*acc[1] + acc[2]*acc[2]))*180) / M_PI,
+                  (atan(acc[1] / sqrt(acc[0]*acc[0] + acc[2]*acc[2]))*180) / M_PI };
+
+  bool risk = tilt[1] < -30;
+
+  // vibrate if we raise hand (simple WIP test)
+  if (risk) {
+    digitalWrite(25, HIGH); // vibrate
+    display_warning1();
+    delay(100);
+
+    digitalWrite(25, LOW);  // stop vibration
+    display_warning2();
+    delay(100);
+  } else {
+      display.clearDisplay();
+      display.display();
+  }
+}
+
+void display_warning1() {
   display.clearDisplay();
   display.setCursor(0, 0);
-  display.print(bleSymbol);
-  display.println(" Time and Batt:");
-  display.println(GetDateTimeString() + String(second()));
-  display.print(getBatteryLevel());
-  display.print("%  ");
-  display.println(analogRead(3));
-  display.println(contrast);
+  display.println("      X   X   X      ");
+  display.println("                     ");
+  display.println("      X   X   X      ");
+  display.println("      X   X   X      ");
+  display.display();
+}
+
+void display_warning2() {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println("XXXXXX XXX XXX XXXXXX");
+  display.println("XXXXXXXXXXXXXXXXXXXXX");
+  display.println("XXXXXX XXX XXX XXXXXX");
+  display.println("XXXXXX XXX XXX XXXXXX");
   display.display();
 }
 
@@ -671,51 +715,16 @@ void displayMenu1() {
 
 void displayMenu2() {
   display.setRotation(0);
-  uint8_t res[6];
-  softbeginTransmission(0x1F);
-  softwrite(0x06);
-  softendTransmission();
-  softrequestFrom(0x1F , 6);
-  for (int i = 0; i < 6; i++) {
-      res[i] = softread();
-  }
-
-  float acc[] = { int16_t((res[1] << 8) | res[0]) / 128,
-                  int16_t((res[3] << 8) | res[2]) / 128,
-                  int16_t((res[5] << 8) | res[4]) / 128 };
-
-  // pitch, roll - source:
-  // http://www.hobbytronics.co.uk/accelerometer-info
-  float tilt[] = {(atan(acc[0] / sqrt(acc[1]*acc[1] + acc[2]*acc[2]))*180) / M_PI,
-                  (atan(acc[1] / sqrt(acc[0]*acc[0] + acc[2]*acc[2]))*180) / M_PI };
-
   display.clearDisplay();
   display.setCursor(0, 0);
-
-  char tmp[21];
-  sprintf(tmp, "pitch: %3d, roll: %3d", int(tilt[0]), int(tilt[1]));
-  display.println(tmp);
-
-  // print a simple VU-meter
-  for (int axis = 0; axis < 2; axis++) {
-      for (int i = 0; i < (90+int(tilt[axis])) / (180/21); i++) {
-          display.print(i==10? '0' : '+');
-      }
-      display.println();
-  }
-  bool risk = tilt[1] > 30;
-  if (risk) {
-      display.println("!!!!!!!!!! !!!!!!!!!!");
-  }
+  display.print(bleSymbol);
+  display.println(" Time and Batt:");
+  display.println(GetDateTimeString() + String(second()));
+  display.print(getBatteryLevel());
+  display.print("%  ");
+  display.println(analogRead(3));
+  display.println(contrast);
   display.display();
-
-  // vibrate if we raise hand (simple WIP test)
-  if (risk) {
-    digitalWrite(25, HIGH);
-    delay(100);
-    digitalWrite(25, LOW);
-    delay(100);
-  }
 }
 
 void displayMenu3() {
@@ -731,7 +740,7 @@ void displayMenu4() {
   display.setRotation(0);
   display.clearDisplay();
   display.setCursor(0, 0);
-  display.println("Hello From Drix!");
+  display.println("Hello From Media Lab!");
   display.println("  :)");
   display.println("Hold for Bootloader");
   display.display();
