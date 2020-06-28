@@ -1,6 +1,6 @@
 #include <SPI.h>
 #include <stdint.h>
-#include <BLEPeripheral.h>
+#include <BLEPeripheralObserver.h>
 
 #include <nrf_nvic.h>//interrupt controller stuff
 #include <nrf_sdm.h>
@@ -48,7 +48,7 @@ boolean vibrationMode;
 String bleSymbol = " ";
 int contrast;
 
-BLEPeripheral                   blePeripheral           = BLEPeripheral();
+BLEPeripheralObserver           blePeriphObserv         = BLEPeripheralObserver();
 BLEService                      batteryLevelService     = BLEService("190A");
 BLECharacteristic   TXchar        = BLECharacteristic("0002", BLENotify, 20);
 BLECharacteristic   RXchar        = BLECharacteristic("0001", BLEWriteWithoutResponse, 20);
@@ -383,24 +383,24 @@ void setup() {
   if (debug)Serial.begin(115200);
   if (debug)Serial.println("Hello, World!");
   wdt_enable(5000);
-  blePeripheral.setLocalName("DS-D6");
-  blePeripheral.setAdvertisingInterval(555);
-  blePeripheral.setAppearance(0x0000);
-  blePeripheral.setConnectable(true);
-  blePeripheral.setDeviceName("ATCDSD6");
-  blePeripheral.setAdvertisedServiceUuid(batteryLevelService.uuid());
-  blePeripheral.addAttribute(batteryLevelService);
-  blePeripheral.addAttribute(TXchar);
-  blePeripheral.addAttribute(RXchar);
+  blePeriphObserv.setLocalName("DS-D6");
+  blePeriphObserv.setAdvertisingInterval(555);
+  blePeriphObserv.setAppearance(0x0000);
+  blePeriphObserv.setConnectable(true);
+  blePeriphObserv.setDeviceName("ATCDSD6");
+  blePeriphObserv.setAdvertisedServiceUuid(batteryLevelService.uuid());
+  blePeriphObserv.addAttribute(batteryLevelService);
+  blePeriphObserv.addAttribute(TXchar);
+  blePeriphObserv.addAttribute(RXchar);
   RXchar.setEventHandler(BLEWritten, characteristicWritten);
-  blePeripheral.setAdvertisedServiceUuid(batteryLevelService1.uuid());
-  blePeripheral.addAttribute(batteryLevelService1);
-  blePeripheral.addAttribute(TXchar1);
-  blePeripheral.addAttribute(RXchar1);
+  blePeriphObserv.setAdvertisedServiceUuid(batteryLevelService1.uuid());
+  blePeriphObserv.addAttribute(batteryLevelService1);
+  blePeriphObserv.addAttribute(TXchar1);
+  blePeriphObserv.addAttribute(RXchar1);
   RXchar1.setEventHandler(BLEWritten, characteristicWritten);
-  blePeripheral.setEventHandler(BLEConnected, blePeripheralConnectHandler);
-  blePeripheral.setEventHandler(BLEDisconnected, blePeripheralDisconnectHandler);
-  blePeripheral.begin();
+  blePeriphObserv.setEventHandler(BLEConnected, blePeripheralConnectHandler);
+  blePeriphObserv.setEventHandler(BLEDisconnected, blePeripheralDisconnectHandler);
+  blePeriphObserv.begin();
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonHandler, FALLING);
   attachInterrupt(digitalPinToInterrupt(15), acclHandler, RISING);
   NRF_GPIO->PIN_CNF[15] &= ~((uint32_t)GPIO_PIN_CNF_SENSE_Msk);
@@ -441,7 +441,7 @@ void setup() {
 }
 
 void loop() {
-  blePeripheral.poll();
+  blePeriphObserv.poll();
   wdt_reset();
   if (sleeping) {
     sd_app_evt_wait();
