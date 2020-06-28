@@ -659,10 +659,9 @@ void displayMenu0() {
 
   // pitch, roll - source:
   // http://www.hobbytronics.co.uk/accelerometer-info
-  float tilt[] = {(atan(acc[0] / sqrt(acc[1]*acc[1] + acc[2]*acc[2]))*180) / M_PI,
-                  (atan(acc[1] / sqrt(acc[0]*acc[0] + acc[2]*acc[2]))*180) / M_PI };
+  float tilt = atan2( acc[1] , sqrt(acc[0]*acc[0]+acc[2]*acc[2]) ) * (180.0 / M_PI);
 
-  bool risk = tilt[1] < -30;
+  bool risk = tilt < -30;
 
   // vibrate if we raise hand (simple WIP test)
   if (risk) {
