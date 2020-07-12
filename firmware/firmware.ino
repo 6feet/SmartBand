@@ -14,6 +14,9 @@
 #include "count_steps.c"
 #include "i2csoft.h"
 
+#include <BLEUtil.h>
+#include <ble_gap.h>
+
 #define wdt_reset() NRF_WDT->RR[0] = WDT_RR_RR_Reload
 #define wdt_enable(timeout) \
   NRF_WDT->CONFIG = NRF_WDT->CONFIG = (WDT_CONFIG_HALT_Pause << WDT_CONFIG_HALT_Pos) | ( WDT_CONFIG_SLEEP_Pause << WDT_CONFIG_SLEEP_Pos); \
@@ -366,6 +369,47 @@ int getBatteryLevel() {
   return map(analogRead(3), 500, 715, 0, 100);
 }
 
+
+void addrHandler(const void* _addr) {
+    Serial.println("addrHandler() start");
+
+  unsigned char* addr = (unsigned char*)_addr;
+  char address[18];
+  BLEUtil::addressToString(addr, address);
+  Serial.print(F("Got own addr: "));
+  Serial.println(address);
+}
+
+void advHandler(const void* adv) {
+  ble_gap_evt_adv_report_t* report = (ble_gap_evt_adv_report_t*)adv;
+
+  // RSSI
+  Serial.print(int(report->rssi)); // TODO cast?
+  Serial.print(" | ");
+
+  // MAC
+  char address[18];
+  BLEUtil::addressToString(report->peer_addr.addr, address);
+  Serial.print(address);
+  Serial.print(" | ");
+
+  // Name
+  for (int i = 0; i < report->dlen; i++) {
+    char c = report->data[i];
+    // TODO: only pring ascii string at the end!
+    if (isPrintable(c)) {
+      Serial.print(c);
+    }
+//  else { // contains binary data (optional):
+//    Serial.print("[");
+//    Serial.print(c, HEX);
+//    Serial.print("]");
+//  }
+  }
+
+  Serial.print("\n    ---------------------\n");
+}
+
 void setup() {
   pinMode(BUTTON_PIN, INPUT);
   pinMode(3, INPUT);
@@ -400,7 +444,13 @@ void setup() {
   RXchar1.setEventHandler(BLEWritten, characteristicWritten);
   blePeriphObserv.setEventHandler(BLEConnected, blePeripheralConnectHandler);
   blePeriphObserv.setEventHandler(BLEDisconnected, blePeripheralDisconnectHandler);
+
+  // TODO: find default scan interval:
+  blePeriphObserv.setEventHandler(BLEAddressReceived, addrHandler);
+  blePeriphObserv.setEventHandler(BLEAdvertisementReceived, advHandler);
   blePeriphObserv.begin();
+  blePeriphObserv.startAdvertising();
+
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonHandler, FALLING);
   attachInterrupt(digitalPinToInterrupt(15), acclHandler, RISING);
   NRF_GPIO->PIN_CNF[15] &= ~((uint32_t)GPIO_PIN_CNF_SENSE_Msk);
@@ -733,8 +783,15 @@ void displayMenu3() {
   display.print("CMD Length: ");
   display.println(answer.length());
   display.println(answer);
+  display.println("+ Scanning RSSI !");
   display.display();
+
+  blePeriphObserv.startScanning();
+//  blePeriphObserv.setLocalName("foobar"); // optional
+  blePeriphObserv.startAdvertising();
+  blePeriphObserv.poll(); // TODO: check if redundant
 }
+
 void displayMenu4() {
   display.setRotation(0);
   display.clearDisplay();
